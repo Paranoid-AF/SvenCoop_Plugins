@@ -6,19 +6,19 @@ void PluginInit(){
 
 HookReturnCode onChat( SayParameters@ pParams )
 {
-	CBasePlayer@ cPlayer = pParams.GetPlayer();
-	CBasePlayer@ cTarget;
+  CBasePlayer@ cPlayer = pParams.GetPlayer();
+  CBasePlayer@ cTarget;
   array<int> cScoreBoard(g_Engine.maxClients);
   array<int> cTopBoard(g_Engine.maxClients);
-	const CCommand@ cArgs = pParams.GetArguments();
-	if(cPlayer is null){
+  const CCommand@ cArgs = pParams.GetArguments();
+  if(cPlayer is null){
     g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
-		return HOOK_CONTINUE;
+    return HOOK_CONTINUE;
   }
-	if (cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
-		return HOOK_CONTINUE;
+  if (cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
+    return HOOK_CONTINUE;
   }
-	if(atoi(cArgs[1]) < 1 || atoi(cArgs[1]) > g_Engine.maxClients){
+  if(atoi(cArgs[1]) < 1 || atoi(cArgs[1]) > g_Engine.maxClients){
     CBasePlayer@ cFindPlayerByName;
     for(int i = 1; i <= g_Engine.maxClients; i++){
       @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
@@ -37,7 +37,7 @@ HookReturnCode onChat( SayParameters@ pParams )
       }
     }
     g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
-		return HOOK_CONTINUE;
+    return HOOK_CONTINUE;
   }
   for(int i = 1; i <= g_Engine.maxClients; i++){
     CBasePlayer@ cThisPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
@@ -62,6 +62,6 @@ HookReturnCode onChat( SayParameters@ pParams )
   }
   cPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,5));
   g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cTarget.pev.netname +"...\n");
-	pParams.ShouldHide = true;
-	return HOOK_HANDLED;
+  pParams.ShouldHide = true;
+  return HOOK_HANDLED;
 }

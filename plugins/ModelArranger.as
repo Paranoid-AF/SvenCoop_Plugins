@@ -12,7 +12,7 @@ void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
   g_Hooks.RegisterHook(Hooks::Player::ClientPutInServer, @PlayerJoin);
-	g_PseudoHooks.RegisterHook( Hooks::Pseudo::Player::ClientUserInfoChanged, any( @playerModelChanged ), g_pMCkey, dictionary={{ CUIC_ARG_KEY, "model" }});
+  g_PseudoHooks.RegisterHook( Hooks::Pseudo::Player::ClientUserInfoChanged, any( @playerModelChanged ), g_pMCkey, dictionary={{ CUIC_ARG_KEY, "model" }});
 }
 
 void MapActivate(){
@@ -21,18 +21,18 @@ void MapActivate(){
 
 HookReturnCode playerModelChanged(KeyValueBuffer@ pKVB,const string &in szKey,const string &in szOldValue){
   array<string> cAllowedModels = fetchAllowedModels(g_Engine.mapname);
-	if(szKey == "model"){
-		string szNewValue = pKVB.GetValue(szKey);
-		if(cAllowedModels.length() > 0 && cAllowedModels.find(szNewValue) < 0){
-			CBasePlayer@ pPlayer = cast<CBasePlayer>(g_EntityFuncs.Instance(pKVB.GetClient()));
-			if( pPlayer !is null && pPlayer.IsConnected()){
-				g_PlayerFuncs.ClientPrint( @pPlayer, HUD_PRINTCONSOLE, "[MDLARR] Only following models are allowed:" + listArray(cAllowedModels) + ". Please pick one from them.\n");
-				pKVB.SetValue(szKey, cAllowedModels[0]);
-				return HOOK_HANDLED;
-			}
-		}
-	}
-	return HOOK_CONTINUE;
+  if(szKey == "model"){
+    string szNewValue = pKVB.GetValue(szKey);
+    if(cAllowedModels.length() > 0 && cAllowedModels.find(szNewValue) < 0){
+      CBasePlayer@ pPlayer = cast<CBasePlayer>(g_EntityFuncs.Instance(pKVB.GetClient()));
+      if( pPlayer !is null && pPlayer.IsConnected()){
+        g_PlayerFuncs.ClientPrint( @pPlayer, HUD_PRINTCONSOLE, "[MDLARR] Only following models are allowed:" + listArray(cAllowedModels) + ". Please pick one from them.\n");
+        pKVB.SetValue(szKey, cAllowedModels[0]);
+        return HOOK_HANDLED;
+      }
+    }
+  }
+  return HOOK_CONTINUE;
 }
 
 HookReturnCode PlayerJoin(CBasePlayer@ pPlayer){
@@ -64,7 +64,7 @@ void regularSomePlayer(CBasePlayer@ pPlayer){
     KeyValueBuffer@ pInfo = g_EngineFuncs.GetInfoKeyBuffer(pPlayer.edict());
     string cPlayerModel = pInfo.GetValue("model");
     if(cAllowedModels.find(cPlayerModel) < 0){
-			g_PlayerFuncs.ClientPrint( @pPlayer, HUD_PRINTCONSOLE, "[MDLARR] Only following models are allowed:" + listArray(cAllowedModels) + ". Please pick one from them.\n");
+      g_PlayerFuncs.ClientPrint( @pPlayer, HUD_PRINTCONSOLE, "[MDLARR] Only following models are allowed:" + listArray(cAllowedModels) + ". Please pick one from them.\n");
       pInfo.SetValue("model", cAllowedModels[0]);
     }
   }
