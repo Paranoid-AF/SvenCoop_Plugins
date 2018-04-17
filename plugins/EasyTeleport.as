@@ -19,6 +19,23 @@ HookReturnCode onChat( SayParameters@ pParams )
 		return HOOK_CONTINUE;
   }
 	if(atoi(cArgs[1]) < 1 || atoi(cArgs[1]) > g_Engine.maxClients){
+    CBasePlayer@ cFindPlayerByName;
+    for(int i = 1; i <= g_Engine.maxClients; i++){
+      @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
+      if(cFindPlayerByName !is null){
+        if(cFindPlayerByName.pev.netname == cArgs[1]){
+          break;
+        }
+      }
+    }
+    if(cFindPlayerByName !is null){
+      if(cFindPlayerByName.pev.netname == cArgs[1]){
+        cPlayer.SetOrigin(cFindPlayerByName.GetOrigin()+Vector(0,0,5));
+        g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cFindPlayerByName.pev.netname +"...\n");
+        pParams.ShouldHide = true;
+        return HOOK_HANDLED;
+      }
+    }
     g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
 		return HOOK_CONTINUE;
   }
