@@ -20,25 +20,16 @@ HookReturnCode onChat( SayParameters@ pParams )
     return HOOK_CONTINUE;
   }
   if(cArgs[1] == ""){
-    // trigger teleport menu
+    openTpMenu(cPlayer);
+    return HOOK_HANDLED;
   }
   if(atoi(cArgs[1]) < 1 || atoi(cArgs[1]) > g_Engine.maxClients){
-    CBasePlayer@ cFindPlayerByName;
-    for(int i = 1; i <= g_Engine.maxClients; i++){
-      @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
-      if(cFindPlayerByName !is null){
-        string targetPlayerName = cFindPlayerByName.pev.netname;
-        if(targetPlayerName.ToLowercase() == cArgs[1].ToLowercase()){
-          break;
-        }
-      }
-    }
+    CBasePlayer@ cFindPlayerByName = getPlayerCBasePlayerByName(cArgs[1]);
     if(cFindPlayerByName !is null){
       string targetPlayerName = cFindPlayerByName.pev.netname;
       if(targetPlayerName.ToLowercase() == cArgs[1].ToLowercase()){
         cPlayer.SetOrigin(cFindPlayerByName.GetOrigin()+Vector(0,0,5));
         g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cFindPlayerByName.pev.netname +"...\n");
-        pParams.ShouldHide = true;
         return HOOK_HANDLED;
       }
     }
@@ -74,7 +65,50 @@ array<int> fetchPlayerListSortedByScore(){
       cTopBoard[i] = i;
     }
   }
-  return cTopBoard;
+return cTopBoard;
+}
+
+void openTpMenu(CBasePlayer@ pPlayer){
+  @tpMenu = CTextMenu(tpMenuRespond);
+  tpMenu.SetTitle("[EasyTeleport]");
+  array<int> playerId = fetchPlayerListSortedByScore();
+  array<string> playerName(g_Engine.maxClients);
+  for(int i = 1; i <= (int(playerId.length())-1); i++){
+    CBasePlayer@ cThisPlayer = g_PlayerFuncs.FindPlayerByIndex(playerId[i]);
+    if(cThisPlayer !is null){
+      playerName[i - 1] = cThisPlayer.pev.netname;
+    }
+  }
+  for(int i = 1; i <= (int(playerName.length())-1); i++)
+  {
+      tpMenu.AddItem(playerName[i - 1], null);
+  }
+  tpMenu.Register();
+  tpMenu.Open(0, 0, pPlayer);
+}
+
+CBasePlayer@ getPlayerCBasePlayerByName(string pName){
+  CBasePlayer@ cFindPlayerByName = null;
+  for(int i = 1; i <= g_Engine.maxClients; i++){
+    @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
+    if(cFindPlayerByName !is null){
+      string targetPlayerName = cFindPlayerByName.pev.netname;
+      if(targetPlayerName.ToLowercase() == pName.ToLowercase()){
+        break;
+      }
+    }
+  }
+  return cFindPlayerByName;
+}
+
+void tpMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
+  if(mItem !is null && pPlayer !is null){
+    CBasePlayer@ cTarget = getPlayerCBasePlayerByName(mItem.m_szName);
+    if(cTarget !is null){
+      g_PlayerFuncs.SayText(pPlayer, "Teleporting you to " + pPlayer.pev.netname +"...\n");
+      pPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,5));
+    }
+  }
 }
 
 CBasePlayer@ getPlayerByRank(int playerRank){
