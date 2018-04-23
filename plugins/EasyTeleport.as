@@ -11,7 +11,6 @@ HookReturnCode onChat( SayParameters@ pParams )
   CBasePlayer@ cTarget;
   array<int> cTopBoard(g_Engine.maxClients);
   const CCommand@ cArgs = pParams.GetArguments();
-  pParams.ShouldHide = true;
   if(cPlayer is null){
     g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
     return HOOK_CONTINUE;
@@ -19,6 +18,7 @@ HookReturnCode onChat( SayParameters@ pParams )
   if (cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
     return HOOK_CONTINUE;
   }
+  pParams.ShouldHide = true;
   if(cArgs[1] == ""){
     openTpMenu(cPlayer);
     return HOOK_HANDLED;
