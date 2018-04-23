@@ -28,7 +28,7 @@ HookReturnCode onChat( SayParameters@ pParams )
     if(cFindPlayerByName !is null){
       string targetPlayerName = cFindPlayerByName.pev.netname;
       if(targetPlayerName.ToLowercase() == cArgs[1].ToLowercase()){
-        cPlayer.SetOrigin(cFindPlayerByName.GetOrigin()+Vector(0,0,5));
+        cPlayer.SetOrigin(cFindPlayerByName.GetOrigin()+Vector(0,0,75));
         g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cFindPlayerByName.pev.netname +"...\n");
         return HOOK_HANDLED;
       }
@@ -41,7 +41,7 @@ HookReturnCode onChat( SayParameters@ pParams )
     g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
     return HOOK_CONTINUE;
   }
-  cPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,5));
+  cPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,75));
   g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cTarget.pev.netname +"...\n");
   return HOOK_HANDLED;
 }
@@ -106,7 +106,7 @@ void tpMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTex
     CBasePlayer@ cTarget = getPlayerCBasePlayerByName(mItem.m_szName);
     if(cTarget !is null){
       g_PlayerFuncs.SayText(pPlayer, "Teleporting you to " + pPlayer.pev.netname +"...\n");
-      pPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,5));
+      pPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,75));
     }
   }
 }
