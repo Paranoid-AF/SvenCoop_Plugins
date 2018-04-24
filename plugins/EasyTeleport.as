@@ -1,4 +1,6 @@
 CTextMenu@ tpMenu = null;
+CTextMenu@ tpConfirm = null;
+array<int> pReceivedRequest(g_Engine.maxClients);
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on Github.");
@@ -28,8 +30,7 @@ HookReturnCode onChat( SayParameters@ pParams )
     if(cFindPlayerByName !is null){
       string targetPlayerName = cFindPlayerByName.pev.netname;
       if(targetPlayerName.ToLowercase() == cArgs[1].ToLowercase()){
-        cPlayer.SetOrigin(cFindPlayerByName.GetOrigin()+Vector(0,0,75));
-        g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cFindPlayerByName.pev.netname +"...\n");
+        sendTeleportRequest(cPlayer, cFindPlayerByName);
         return HOOK_HANDLED;
       }
     }
@@ -41,8 +42,7 @@ HookReturnCode onChat( SayParameters@ pParams )
     g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
     return HOOK_CONTINUE;
   }
-  cPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,75));
-  g_PlayerFuncs.SayText(cPlayer, "Teleporting you to " + cTarget.pev.netname +"...\n");
+  sendTeleportRequest(cPlayer, cTarget);
   return HOOK_HANDLED;
 }
 
@@ -70,7 +70,7 @@ return cTopBoard;
 
 void openTpMenu(CBasePlayer@ pPlayer){
   @tpMenu = CTextMenu(tpMenuRespond);
-  tpMenu.SetTitle("[EasyTeleport]");
+  tpMenu.SetTitle("[EasyTeleport]\nPick a player for teleportation.\n");
   array<int> playerId = fetchPlayerListSortedByScore();
   array<string> playerName(g_Engine.maxClients);
   for(int i = 1; i <= (int(playerId.length())-1); i++){
@@ -101,13 +101,47 @@ CBasePlayer@ getPlayerCBasePlayerByName(string pName){
   return cFindPlayerByName;
 }
 
+int getPlayerIndex(CBasePlayer@ pPlayer){
+  CBasePlayer@ cFindPlayerByName = null;
+  int thisIndex;
+  for(int i = 1; i <= g_Engine.maxClients; i++){
+    @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
+    if(cFindPlayerByName is pPlayer){
+      thisIndex = i;
+      break;
+    }
+  }
+  return thisIndex;
+}
+
 void tpMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
   if(mItem !is null && pPlayer !is null){
     CBasePlayer@ cTarget = getPlayerCBasePlayerByName(mItem.m_szName);
-    if(cTarget !is null){
-      g_PlayerFuncs.SayText(pPlayer, "Teleporting you to " + pPlayer.pev.netname +"...\n");
-      pPlayer.SetOrigin(cTarget.GetOrigin()+Vector(0,0,75));
+    sendTeleportRequest(pPlayer, cTarget);
+  }
+}
+
+void sendTeleportRequest(CBasePlayer@ pPlayer, CBasePlayer@ cTarget){
+  pReceivedRequest[getPlayerIndex(cTarget)] = getPlayerIndex(pPlayer);
+  @tpConfirm = CTextMenu(tpConfirmRespond);
+  tpConfirm.SetTitle("[EasyTeleport]\nYou've got a new teleportation request from " + pPlayer.pev.netname +".\n");
+  tpConfirm.AddItem("Accept", null);
+  tpConfirm.AddItem("Decline", null);
+  tpConfirm.Register();
+  tpConfirm.Open(0, 0, cTarget);
+  g_PlayerFuncs.SayText(pPlayer, "Your teleportation request is sent to " + cTarget.pev.netname +", please wait for confirmation.\n");
+}
+
+void tpConfirmRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
+  if(mItem.m_szName == "Accept" && pPlayer !is null){
+    CBasePlayer@ cSourcePlayer = g_PlayerFuncs.FindPlayerByIndex(pReceivedRequest[getPlayerIndex(pPlayer)]);
+    if(cSourcePlayer !is null){
+      g_PlayerFuncs.SayText(cSourcePlayer, "Teleporting you to " + pPlayer.pev.netname +"...\n");
+      cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,75));
     }
+  }
+  if(mItem.m_szName == "Decline" && pPlayer !is null){
+    pReceivedRequest[getPlayerIndex(pPlayer)] = 0;
   }
 }
 
