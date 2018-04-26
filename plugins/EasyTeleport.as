@@ -3,7 +3,7 @@ CTextMenu@ tpConfirm = null;
 array<int> pReceivedRequest(g_Engine.maxClients);
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
-  g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on Github.");
+  g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
 }
 
