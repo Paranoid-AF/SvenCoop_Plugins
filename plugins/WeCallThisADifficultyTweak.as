@@ -2,12 +2,11 @@
 CScheduledFunction@ headcrabRefreshTimer;
 CScheduledFunction@ regenHealth;
 CScheduledFunction@ healthDeduct;
-CScheduledFunction@ healthRefresh;
 EHandle h_Headcrab;
 string g_PTDKey;
 array<int> modifiedList;
+array<float> lastDeduct(g_Engine.maxClients + 1);
 array<int> healthToRecover(g_Engine.maxClients + 1);
-array<int> currentHealth(g_Engine.maxClients + 1);
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
@@ -15,10 +14,18 @@ void PluginInit(){
 }
 void MapActivate(){
   g_Scheduler.ClearTimerList();
+  for(int i = 0; i <= (int(modifiedList.length()) - 1); i++){
+    modifiedList.removeLast();
+  }
+  for(int i = 1; i <= (int(lastDeduct.length()) - 1); i++){
+    lastDeduct[i] = 0;
+  }
+  for(int i = 1; i <= (int(healthToRecover.length()) - 1); i++){
+    healthToRecover[i] = 0;
+  }
   @headcrabRefreshTimer = g_Scheduler.SetInterval("timer_searchForHeadcrabs", 1, g_Scheduler.REPEAT_INFINITE_TIMES);
   @regenHealth = g_Scheduler.SetInterval("timer_regenHealth", 2.5, g_Scheduler.REPEAT_INFINITE_TIMES);
   @healthDeduct = g_Scheduler.SetInterval("timer_healthDeduct", 0.3, g_Scheduler.REPEAT_INFINITE_TIMES);
-  @healthRefresh = g_Scheduler.SetInterval("timer_healthRefresh", 1, g_Scheduler.REPEAT_INFINITE_TIMES);
 }
 
 void timer_searchForHeadcrabs(){
@@ -64,21 +71,20 @@ bool isEntityModified(int edictIndex){
 
 HookReturnCode playerTakeDamage( CBasePlayer@ pVictim, edict_t@ pEdInflictor, edict_t@ pEdAttacker, const float flDamage, const int bitsDamageType, const uint bitsTrigger )
 {
-	if(isEntityModified(g_EngineFuncs.IndexOfEdict(pEdInflictor))){
-    int thisDamage = int(Math.Floor(flDamage + 0.5f));
-    healthToRecover[getPlayerIndex(pVictim)] = (currentHealth[getPlayerIndex(pVictim)] - thisDamage - 1);
-    pVictim.pev.health = 1;
-  }
-	return HOOK_CONTINUE;
-}
-
-void timer_healthRefresh(){
-  for(int i = 1; i <= (int(currentHealth.length())-1); i++){
-    CBasePlayer@ cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
-    if(cFindPlayerByName !is null){
-      currentHealth[i] = int(cFindPlayerByName.pev.health);
+  int thisDamage = int(Math.Floor(flDamage + 0.5f));
+  int thisPlayer = getPlayerIndex(pVictim);
+  if((g_Engine.time - lastDeduct[thisPlayer]) > 0.8f){
+    if(isEntityModified(g_EngineFuncs.IndexOfEdict(pEdInflictor))){
+      if(int(pVictim.pev.health) > thisDamage){
+        g_PlayerFuncs.SayText(pVictim, "[H.E.V. Mark IV] Neurotoxin Detected! Injecting antidote...\n");
+        healthToRecover[thisPlayer] += (int(pVictim.pev.health) - 1 - thisDamage);
+        pVictim.pev.health = 1;
+      }
+      tweakForHeadcrabs(g_EntityFuncs.Create("monster_babycrab", pVictim.GetOrigin(), Vector(0, 0, 0), false));
     }
   }
+  lastDeduct[thisPlayer] = g_Engine.time;
+	return HOOK_CONTINUE;
 }
 
 void timer_regenHealth(){
