@@ -71,16 +71,20 @@ bool isEntityModified(int edictIndex){
 
 HookReturnCode playerTakeDamage( CBasePlayer@ pVictim, edict_t@ pEdInflictor, edict_t@ pEdAttacker, const float flDamage, const int bitsDamageType, const uint bitsTrigger )
 {
-  int thisDamage = int(Math.Floor(flDamage + 0.5f));
+  int thisDamage = int(Math.Floor(flDamage + 0.2f));
   int thisPlayer = getPlayerIndex(pVictim);
   if((g_Engine.time - lastDeduct[thisPlayer]) > 0.8f){
     if(isEntityModified(g_EngineFuncs.IndexOfEdict(pEdInflictor))){
       if(int(pVictim.pev.health) > thisDamage){
-        g_PlayerFuncs.SayText(pVictim, "[H.E.V. Mark IV] Neurotoxin Detected! Injecting antidote...\n");
+        g_PlayerFuncs.SayText(pVictim, "[H.E.V. Mark IV] Neurotoxin detected! Injecting antidote...\n");
         healthToRecover[thisPlayer] += (int(pVictim.pev.health) - 1 - thisDamage);
         pVictim.pev.health = 1;
       }
-      tweakForHeadcrabs(g_EntityFuncs.Create("monster_babycrab", pVictim.GetOrigin(), Vector(0, 0, 0), false));
+      CBaseEntity@ babyCrab = g_EntityFuncs.Create("monster_babycrab", pVictim.GetOrigin(), Vector(0, 0, 0), false);
+      babyCrab.pev.rendermode = kRenderNormal;
+      babyCrab.pev.renderfx = kRenderFxGlowShell;
+      babyCrab.pev.renderamt = 0;
+      babyCrab.pev.rendercolor = Vector(128,0,255);
     }
   }
   lastDeduct[thisPlayer] = g_Engine.time;
