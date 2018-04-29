@@ -81,7 +81,10 @@ void openTpMenu(CBasePlayer@ pPlayer){
   }
   for(int i = 1; i <= (int(playerName.length())-1); i++)
   {
-      tpMenu.AddItem(playerName[i - 1], null);
+    string thisName = playerName[i - 1];
+    if(thisName != ""){
+      tpMenu.AddItem(thisName, null);
+    }
   }
   tpMenu.Register();
   tpMenu.Open(0, 0, pPlayer);
