@@ -109,6 +109,9 @@ void tpConfirmRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const C
     if(cSourcePlayer !is null){
       g_PlayerFuncs.SayText(cSourcePlayer, "[EasyTeleport] Teleporting you to " + pPlayer.pev.netname +"...\n");
       cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,75));
+      NetworkMessage msg(MSG_ONE, NetworkMessages::NetworkMessageType(9), cSourcePlayer.edict());
+      msg.WriteString("unstuck");
+      msg.End();
     }
   }
   if(mItem.m_szName == "Decline" && pPlayer !is null){
