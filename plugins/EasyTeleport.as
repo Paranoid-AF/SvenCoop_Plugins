@@ -14,7 +14,7 @@ HookReturnCode onChat( SayParameters@ pParams )
   array<int> cTopBoard(g_Engine.maxClients);
   const CCommand@ cArgs = pParams.GetArguments();
   if(cPlayer is null){
-    g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
+    g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation faild for invailid input.\nOnly valid players are allowed.\n");
     return HOOK_CONTINUE;
   }
   if (cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
@@ -25,25 +25,16 @@ HookReturnCode onChat( SayParameters@ pParams )
     openTpMenu(cPlayer);
     return HOOK_HANDLED;
   }
-  if(atoi(cArgs[1]) < 1 || atoi(cArgs[1]) > g_Engine.maxClients){
-    CBasePlayer@ cFindPlayerByName = getPlayerCBasePlayerByName(cArgs[1]);
-    if(cFindPlayerByName !is null){
-      string targetPlayerName = cFindPlayerByName.pev.netname;
-      if(targetPlayerName.ToLowercase() == cArgs[1].ToLowercase()){
-        sendTeleportRequest(cPlayer, cFindPlayerByName);
-        return HOOK_HANDLED;
-      }
+  CBasePlayer@ cFindPlayerByName = getPlayerCBasePlayerByName(cArgs[1]);
+  if(cFindPlayerByName !is null){
+    string targetPlayerName = cFindPlayerByName.pev.netname;
+    if(targetPlayerName.ToLowercase() == cArgs[1].ToLowercase()){
+      sendTeleportRequest(cPlayer, cFindPlayerByName);
+      return HOOK_HANDLED;
     }
-    g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
-    return HOOK_CONTINUE;
   }
-  @cTarget = getPlayerByRank(atoi(cArgs[1]));
-  if(cTarget is null){
-    g_PlayerFuncs.SayText(cPlayer, "Teleportation faild for invailid input.\nOnly valid numbers are allowed.\n");
-    return HOOK_CONTINUE;
-  }
-  sendTeleportRequest(cPlayer, cTarget);
-  return HOOK_HANDLED;
+  g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation faild for invailid input.\nOnly valid names are allowed.\n");
+  return HOOK_CONTINUE;
 }
 
 array<int> fetchPlayerListSortedByScore(){
@@ -55,6 +46,7 @@ array<int> fetchPlayerListSortedByScore(){
       break;
     }
     cScoreBoard[i - 1] = int(cThisPlayer.pev.frags);
+    g_Game.AlertMessage( at_console, "[EZTP] Player Score: " + string(cScoreBoard[i - 1]), g_Engine.time );
   }
   cTopBoard[0] = 0;
   for(int i = 1; i <= int(cScoreBoard.length() - 1); i++){
@@ -82,7 +74,7 @@ void openTpMenu(CBasePlayer@ pPlayer){
   for(int i = 1; i <= (int(playerName.length())-1); i++)
   {
     string thisName = playerName[i - 1];
-    if(thisName != ""){
+    if(thisName != "" && thisName != " "){
       tpMenu.AddItem(thisName, null);
     }
   }
@@ -132,25 +124,18 @@ void sendTeleportRequest(CBasePlayer@ pPlayer, CBasePlayer@ cTarget){
   tpConfirm.AddItem("Decline", null);
   tpConfirm.Register();
   tpConfirm.Open(0, 0, cTarget);
-  g_PlayerFuncs.SayText(pPlayer, "Your teleportation request is sent to " + cTarget.pev.netname +", please wait for confirmation.\n");
+  g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Your teleportation request is sent to " + cTarget.pev.netname +", please wait for confirmation.\n");
 }
 
 void tpConfirmRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
   if(mItem.m_szName == "Accept" && pPlayer !is null){
     CBasePlayer@ cSourcePlayer = g_PlayerFuncs.FindPlayerByIndex(pReceivedRequest[getPlayerIndex(pPlayer)]);
     if(cSourcePlayer !is null){
-      g_PlayerFuncs.SayText(cSourcePlayer, "Teleporting you to " + pPlayer.pev.netname +"...\n");
+      g_PlayerFuncs.SayText(cSourcePlayer, "[EasyTeleport] Teleporting you to " + pPlayer.pev.netname +"...\n");
       cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,75));
     }
   }
   if(mItem.m_szName == "Decline" && pPlayer !is null){
     pReceivedRequest[getPlayerIndex(pPlayer)] = 0;
   }
-}
-
-CBasePlayer@ getPlayerByRank(int playerRank){
-  CBasePlayer@ cTarget;
-  array<int> cTopBoard = fetchPlayerListSortedByScore();
-  @cTarget = g_PlayerFuncs.FindPlayerByIndex(cTopBoard[playerRank - 1] + 1);
-  return cTarget;
 }
