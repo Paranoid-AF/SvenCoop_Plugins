@@ -37,36 +37,12 @@ HookReturnCode onChat( SayParameters@ pParams )
   return HOOK_CONTINUE;
 }
 
-array<int> fetchPlayerListSortedByScore(){
-  array<int> cScoreBoard(g_Engine.maxClients);
-  array<int> cTopBoard(g_Engine.maxClients);
-  for(int i = 1; i <= g_Engine.maxClients; i++){
-    CBasePlayer@ cThisPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
-    if(cThisPlayer is null){
-      break;
-    }
-    cScoreBoard[i - 1] = int(cThisPlayer.pev.frags);
-    g_Game.AlertMessage( at_console, "[EZTP] Player Score: " + string(cScoreBoard[i - 1]), g_Engine.time );
-  }
-  cTopBoard[0] = 0;
-  for(int i = 1; i <= int(cScoreBoard.length() - 1); i++){
-    if(cScoreBoard[i] > cScoreBoard[i - 1]){
-      cTopBoard[i - 1] = i;
-      cTopBoard[i] = i - 1;
-    }else{
-      cTopBoard[i] = i;
-    }
-  }
-return cTopBoard;
-}
-
 void openTpMenu(CBasePlayer@ pPlayer){
   @tpMenu = CTextMenu(tpMenuRespond);
   tpMenu.SetTitle("[EasyTeleport]\nPick a player for teleportation.\n");
-  array<int> playerId = fetchPlayerListSortedByScore();
   array<string> playerName(g_Engine.maxClients);
-  for(int i = 1; i <= (int(playerId.length())-1); i++){
-    CBasePlayer@ cThisPlayer = g_PlayerFuncs.FindPlayerByIndex(playerId[i]);
+  for(int i = 1; i <= (int(g_Engine.maxClients)); i++){
+    CBasePlayer@ cThisPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
     if(cThisPlayer !is null){
       playerName[i - 1] = cThisPlayer.pev.netname;
     }
