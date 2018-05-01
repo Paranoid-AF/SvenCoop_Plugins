@@ -13,7 +13,7 @@ HookReturnCode onChat(SayParameters@ pParams){
   array<int> cTopBoard(g_Engine.maxClients);
   const CCommand@ cArgs = pParams.GetArguments();
   if(cPlayer is null){
-    g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation faild for invailid input.\nOnly valid players are allowed.\n");
+    g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation failed, only valid players are allowed.\n");
     return HOOK_CONTINUE;
   }
   if (cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
@@ -32,7 +32,7 @@ HookReturnCode onChat(SayParameters@ pParams){
       return HOOK_HANDLED;
     }
   }
-  g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation faild for invailid input.\nOnly valid names are allowed.\n");
+  g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation failed for invailid input. Only valid names are allowed.\n");
   return HOOK_CONTINUE;
 }
 
