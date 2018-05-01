@@ -7,8 +7,7 @@ void PluginInit(){
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
 }
 
-HookReturnCode onChat( SayParameters@ pParams )
-{
+HookReturnCode onChat(SayParameters@ pParams){
   CBasePlayer@ cPlayer = pParams.GetPlayer();
   CBasePlayer@ cTarget;
   array<int> cTopBoard(g_Engine.maxClients);
@@ -95,7 +94,7 @@ void tpMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTex
 void sendTeleportRequest(CBasePlayer@ pPlayer, CBasePlayer@ cTarget){
   pReceivedRequest[getPlayerIndex(cTarget)] = getPlayerIndex(pPlayer);
   @tpConfirm = CTextMenu(tpConfirmRespond);
-  tpConfirm.SetTitle("[EasyTeleport]\nYou've got a new teleportation request from " + pPlayer.pev.netname +".\n");
+  tpConfirm.SetTitle("[EasyTeleport]\nYou've got a new teleportation request from " + pPlayer.pev.netname +".\nOnly confirm when you think it's safe to do so.\n");
   tpConfirm.AddItem("Accept", null);
   tpConfirm.AddItem("Decline", null);
   tpConfirm.Register();
@@ -108,7 +107,7 @@ void tpConfirmRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const C
     CBasePlayer@ cSourcePlayer = g_PlayerFuncs.FindPlayerByIndex(pReceivedRequest[getPlayerIndex(pPlayer)]);
     if(cSourcePlayer !is null){
       g_PlayerFuncs.SayText(cSourcePlayer, "[EasyTeleport] Teleporting you to " + pPlayer.pev.netname +"...\n");
-      cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,75));
+      cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,10));
       NetworkMessage msg(MSG_ONE, NetworkMessages::NetworkMessageType(9), cSourcePlayer.edict());
       msg.WriteString("unstuck");
       msg.End();
