@@ -98,7 +98,15 @@ int getPlayerIndex(CBasePlayer@ pPlayer){
 void tpMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
   if(mItem !is null && pPlayer !is null){
     CBasePlayer@ cTarget = getPlayerCBasePlayerByName(mItem.m_szName);
-    sendTeleportRequest(pPlayer, cTarget);
+    if(pPlayer.IsAlive() && pPlayer.pev.deadflag != DEAD_DYING){
+      if(cTarget.IsAlive() && cTarget.pev.deadflag != DEAD_DYING){
+        sendTeleportRequest(pPlayer, cTarget);
+      }else{
+        g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Sorry, your target player is now dead.\n");
+      }
+    }else{
+       g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Sorry but you're dead, so you can't get teleported.\n");
+    }
   }
 }
 
@@ -114,17 +122,26 @@ void sendTeleportRequest(CBasePlayer@ pPlayer, CBasePlayer@ cTarget){
 }
 
 void tpConfirmRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
-  if(mItem.m_szName == "Accept" && pPlayer !is null){
-    CBasePlayer@ cSourcePlayer = g_PlayerFuncs.FindPlayerByIndex(pReceivedRequest[getPlayerIndex(pPlayer)]);
-    if(cSourcePlayer !is null){
-      g_PlayerFuncs.SayText(cSourcePlayer, "[EasyTeleport] Teleporting you to " + pPlayer.pev.netname +"...\n");
-      cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,4));
-      NetworkMessage msg(MSG_ONE, NetworkMessages::NetworkMessageType(9), cSourcePlayer.edict());
-      msg.WriteString("unstuck");
-      msg.End();
+  CBasePlayer@ cSourcePlayer = g_PlayerFuncs.FindPlayerByIndex(pReceivedRequest[getPlayerIndex(pPlayer)]);
+  if(cSourcePlayer !is null){
+    if(mItem.m_szName == "Accept" && pPlayer !is null){
+      if(pPlayer.IsAlive() && pPlayer.pev.deadflag != DEAD_DYING){
+        if(cSourcePlayer.IsAlive() && cSourcePlayer.pev.deadflag != DEAD_DYING){
+          g_PlayerFuncs.SayText(cSourcePlayer, "[EasyTeleport] Teleporting you to " + pPlayer.pev.netname +"...\n");
+          cSourcePlayer.SetOrigin(pPlayer.GetOrigin()+Vector(0,0,4));
+          NetworkMessage msg(MSG_ONE, NetworkMessages::NetworkMessageType(9), cSourcePlayer.edict());
+          msg.WriteString("unstuck");
+          msg.End();
+        }else{
+          g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Sorry, the player is now not alive.\n");
+        }
+      }else{
+         g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Sorry but it seems that you're dead.\n");
+      }
     }
-  }
-  if(mItem.m_szName == "Decline" && pPlayer !is null){
-    pReceivedRequest[getPlayerIndex(pPlayer)] = 0;
+    if(mItem.m_szName == "Decline" && pPlayer !is null){
+      pReceivedRequest[getPlayerIndex(pPlayer)] = 0;
+      g_PlayerFuncs.SayText(cSourcePlayer, "[EasyTeleport] Sorry, your teleportation request to " + pPlayer.pev.netname +" was rejected by the player.\n");
+    }
   }
 }
