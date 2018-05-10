@@ -1,10 +1,16 @@
 CTextMenu@ tpMenu = null;
 CTextMenu@ tpConfirm = null;
 array<int> pReceivedRequest(g_Engine.maxClients);
+CCVar@ eztpDisabled;
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
+  @eztpDisabled = CCVar("disabled", 0, "Change it to 0 to enable and 1 to disable.", ConCommandFlag::AdminOnly);
+}
+
+void MapInit(){
+  eztpDisabled.SetInt(0);
 }
 
 HookReturnCode onChat(SayParameters@ pParams){
@@ -16,10 +22,15 @@ HookReturnCode onChat(SayParameters@ pParams){
     g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation failed, only valid players are allowed.\n");
     return HOOK_CONTINUE;
   }
-  if (cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
+  if(cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
     return HOOK_CONTINUE;
   }
   pParams.ShouldHide = true;
+  int isDisabled = eztpDisabled.GetInt();
+  if(isDisabled == 1){
+    g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation is disabled by the map for better gameplay.\n");
+    return HOOK_CONTINUE;
+  }
   if(cArgs[1] == ""){
     openTpMenu(cPlayer);
     return HOOK_HANDLED;
