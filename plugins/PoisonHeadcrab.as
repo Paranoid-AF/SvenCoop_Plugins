@@ -1,7 +1,6 @@
 #include "an_PseudoHooks"
 CScheduledFunction@ headcrabRefreshTimer;
 CScheduledFunction@ regenHealth;
-CScheduledFunction@ healthDeduct;
 EHandle h_Headcrab;
 string g_PTDKey;
 array<int> modifiedList;
@@ -25,7 +24,6 @@ void MapActivate(){
   }
   @headcrabRefreshTimer = g_Scheduler.SetInterval("timer_searchForHeadcrabs", 1, g_Scheduler.REPEAT_INFINITE_TIMES);
   @regenHealth = g_Scheduler.SetInterval("timer_regenHealth", 2.5, g_Scheduler.REPEAT_INFINITE_TIMES);
-  @healthDeduct = g_Scheduler.SetInterval("timer_healthDeduct", 0.3, g_Scheduler.REPEAT_INFINITE_TIMES);
 }
 
 void timer_searchForHeadcrabs(){
@@ -73,18 +71,23 @@ HookReturnCode playerTakeDamage( CBasePlayer@ pVictim, edict_t@ pEdInflictor, ed
 {
   int thisDamage = int(Math.Floor(flDamage + 0.2f));
   int thisPlayer = getPlayerIndex(pVictim);
-  if((g_Engine.time - lastDeduct[thisPlayer]) > 0.8f){
-    if(isEntityModified(g_EngineFuncs.IndexOfEdict(pEdInflictor))){
-      if(int(pVictim.pev.health) > thisDamage){
-        g_PlayerFuncs.SayText(pVictim, "[H.E.V. Mark IV] Neurotoxin detected! Injecting antidote...\n");
-        healthToRecover[thisPlayer] += (int(pVictim.pev.health) - 1 - thisDamage);
-        pVictim.pev.health = 1;
+  if(pVictim.pev.health == 0 || !pVictim.IsAlive() || pVictim.pev.deadflag == DEAD_DYING){
+    if(healthToRecover[thisPlayer] > 0){
+      CBasePlayer@ cFindPlayerByName = null;
+      @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(thisPlayer);
+      if(cFindPlayerByName is null){
+        healthToRecover[thisPlayer] = 0;
       }
-      CBaseEntity@ babyCrab = g_EntityFuncs.Create("monster_babycrab", pVictim.GetOrigin(), Vector(0, 0, 0), false);
-      babyCrab.pev.rendermode = kRenderNormal;
-      babyCrab.pev.renderfx = kRenderFxGlowShell;
-      babyCrab.pev.renderamt = 0;
-      babyCrab.pev.rendercolor = Vector(128,0,255);
+    }
+  }else{
+    if((g_Engine.time - lastDeduct[thisPlayer]) > 0.8f){
+      if(isEntityModified(g_EngineFuncs.IndexOfEdict(pEdInflictor))){
+        if(int(pVictim.pev.health) > thisDamage){
+          g_PlayerFuncs.SayText(pVictim, "[H.E.V. Mark IV] Neurotoxin detected! Injecting antidote...\n");
+          healthToRecover[thisPlayer] += (int(pVictim.pev.health) - 1 - thisDamage);
+          pVictim.pev.health = 1;
+        }
+      }
     }
   }
   lastDeduct[thisPlayer] = g_Engine.time;
@@ -106,18 +109,6 @@ void timer_regenHealth(){
             healthToRecover[i] = 0;
           }
         }
-      }
-    }
-  }
-}
-
-void timer_healthDeduct(){
-  for(int i = 1; i <= (int(healthToRecover.length())-1); i++){
-    if(healthToRecover[i] > 0){
-      CBasePlayer@ cFindPlayerByName = null;
-      @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
-      if(cFindPlayerByName is null){
-        healthToRecover[i] = 0;
       }
     }
   }
