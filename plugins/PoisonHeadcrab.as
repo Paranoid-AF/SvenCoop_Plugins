@@ -100,7 +100,7 @@ void timer_regenHealth(){
       CBasePlayer@ cFindPlayerByName = null;
       @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(i);
       if(cFindPlayerByName !is null){
-        if(cFindPlayerByName.pev.health < cFindPlayerByName.pev.max_health){
+        if(cFindPlayerByName.pev.health <= (cFindPlayerByName.pev.max_health - 10)){
           if(healthToRecover[i] > 10){
             healthToRecover[i] -= 10;
             cFindPlayerByName.pev.health += 10;
