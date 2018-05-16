@@ -54,7 +54,7 @@ HookReturnCode playerTakeDamage( CBasePlayer@ pVictim, edict_t@ pEdInflictor, ed
 {
   int thisDamage = int(Math.Floor(flDamage + 0.2f));
   int thisPlayer = getPlayerIndex(pVictim);
-  if(pVictim.pev.health == 0 || !pVictim.IsAlive() || pVictim.pev.deadflag == DEAD_DYING){
+  if(pVictim.pev.health <= 0 || !pVictim.IsAlive() || pVictim.pev.deadflag == DEAD_DYING){
     if(healthToRecover[thisPlayer] > 0){
       CBasePlayer@ cFindPlayerByName = null;
       @cFindPlayerByName = g_PlayerFuncs.FindPlayerByIndex(thisPlayer);
