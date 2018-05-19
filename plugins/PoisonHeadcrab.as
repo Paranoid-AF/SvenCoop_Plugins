@@ -1,13 +1,12 @@
 #include "an_PseudoHooks"
 CScheduledFunction@ regenHealth;
 EHandle h_Headcrab;
-string g_PTDKey;
 array<float> lastDeduct(g_Engine.maxClients + 1);
 array<int> healthToRecover(g_Engine.maxClients + 1);
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
-  g_PseudoHooks.RegisterHook(Hooks::Pseudo::Player::PlayerPostTakeDamage, any(@playerTakeDamage), g_PTDKey);
+  g_PseudoHooks.RegisterHook(Hooks::Pseudo::Player::PlayerPostTakeDamage, any(@playerTakeDamage), void);
 }
 
 void MapActivate(){
@@ -26,7 +25,7 @@ bool isHeadcrab(edict_t@ pEdInflictor){
   CBaseEntity@ headcrabEntity;
   for(;;){
     @headcrabEntity = g_EntityFuncs.FindEntityByClassname(@headcrabEntity, "monster_headcrab");
-    if(headcrabEntity.edict() is pEdInflictor){
+    if(@headcrabEntity.edict() is pEdInflictor){
       isIt = true;
       break;
     }
