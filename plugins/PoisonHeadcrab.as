@@ -25,11 +25,11 @@ bool isHeadcrab(edict_t@ pEdInflictor){
   CBaseEntity@ headcrabEntity;
   for(;;){
     @headcrabEntity = g_EntityFuncs.FindEntityByClassname(@headcrabEntity, "monster_headcrab");
-    if(@headcrabEntity.edict() is @pEdInflictor){
-      isIt = true;
+    if(@headcrabEntity is null){
       break;
     }
-    if(@headcrabEntity is null){
+    if(@headcrabEntity.edict() is @pEdInflictor){
+      isIt = true;
       break;
     }
   }
