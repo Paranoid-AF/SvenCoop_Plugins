@@ -7,7 +7,6 @@ int pitchEachIncrease = 8;
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
-  g_Hooks.RegisterHook(Hooks::Player::PlayerPreThink, @onChange);
 }
 
 void MapInit(){
@@ -27,6 +26,7 @@ void MapInit(){
   g_SoundSystem.PrecacheSound("TeabagManiac/!dip2.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/!potato.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/!chip.wav");
+  g_Hooks.RegisterHook(Hooks::Player::PlayerPreThink, @onChange);
 }
 
 HookReturnCode onChange(CBasePlayer@ pPlayer, uint& out uiFlags){
