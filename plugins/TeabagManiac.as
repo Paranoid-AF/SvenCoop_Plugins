@@ -11,6 +11,14 @@ void PluginInit(){
 }
 
 void MapInit(){
+  g_Game.PrecacheGeneric("sound/TeabagManiac/dip1.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/dip2.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/potato.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/chip.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/!dip1.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/!dip2.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/!potato.wav");
+  g_Game.PrecacheGeneric("sound/TeabagManiac/!chip.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/dip1.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/dip2.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/potato.wav");
