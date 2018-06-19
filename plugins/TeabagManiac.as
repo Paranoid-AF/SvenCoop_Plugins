@@ -1,9 +1,9 @@
-bool lastStatus = false;
+array<bool> lastStatus(g_Engine.maxClients);
 array<float> lastDuck(g_Engine.maxClients);
 array<int> playerCombo(g_Engine.maxClients);
-int hpEach = 3;
+const int hpEach = 3;
 const int comboStarts = 2;
-int pitchEachIncrease = 8;
+const int pitchEachIncrease = 8;
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
@@ -32,6 +32,9 @@ void MapInit(){
   for(int i = 1; i <= (int(playerCombo.length()) - 1); i++){
     playerCombo[i] = 0;
   }
+  for(int i = 1; i <= (int(lastStatus.length()) - 1); i++){
+    lastStatus[i] = false;
+  }
   g_Hooks.RegisterHook(Hooks::Player::PlayerPreThink, @onChange);
 }
 
@@ -42,7 +45,7 @@ HookReturnCode onChange(CBasePlayer@ pPlayer, uint& out uiFlags){
   }
   int playerIndex = getPlayerIndex(pPlayer);
   int pitchIncrease = -pitchEachIncrease;
-  if((pPlayer.pev.button & IN_DUCK ) != 0 && !lastStatus && (g_Engine.time - lastDuck[playerIndex]) > 0.5){
+  if((pPlayer.pev.button & IN_DUCK ) != 0 && !lastStatus[playerIndex] && (g_Engine.time - lastDuck[playerIndex]) > 0.5){
     if(playerCombo[playerIndex] > 0){
       if((pPlayer.pev.health + hpEach) > pPlayer.pev.max_health && (pPlayer.pev.max_health - hpEach) < pPlayer.pev.health){
         pPlayer.pev.health = pPlayer.pev.max_health;
@@ -92,12 +95,12 @@ HookReturnCode onChange(CBasePlayer@ pPlayer, uint& out uiFlags){
       }
     }
   playerCombo[playerIndex] += 1;
-  lastStatus = true;
+  lastStatus[playerIndex] = true;
   lastDuck[playerIndex] = g_Engine.time;
   return HOOK_HANDLED;
   }
   if((pPlayer.pev.button & IN_DUCK ) == 0){
-    lastStatus = false;
+    lastStatus[playerIndex] = false;
     if((g_Engine.time - lastDuck[playerIndex]) > 2){
       playerCombo[playerIndex] = 0;
     }
