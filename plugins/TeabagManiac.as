@@ -26,6 +26,12 @@ void MapInit(){
   g_SoundSystem.PrecacheSound("TeabagManiac/!dip2.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/!potato.wav");
   g_SoundSystem.PrecacheSound("TeabagManiac/!chip.wav");
+  for(int i = 1; i <= (int(lastDuck.length()) - 1); i++){
+    lastDuck[i] = 0;
+  }
+  for(int i = 1; i <= (int(playerCombo.length()) - 1); i++){
+    playerCombo[i] = 0;
+  }
   g_Hooks.RegisterHook(Hooks::Player::PlayerPreThink, @onChange);
 }
 
