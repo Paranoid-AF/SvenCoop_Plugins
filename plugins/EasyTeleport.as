@@ -1,16 +1,36 @@
 CTextMenu@ tpMenu = null;
 CTextMenu@ tpConfirm = null;
 array<int> pReceivedRequest(g_Engine.maxClients);
+array<float> pLastSend(g_Engine.maxClients);
+array<bool> pAllowTp(g_Engine.maxClients, true);
 CCVar@ eztpDisabled;
+CCVar@ eztpCooldown;
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
+  g_Hooks.RegisterHook(Hooks::Player::ClientPutInServer, @onJoin);
   @eztpDisabled = CCVar("disabled", 0, "Change it to 0 to enable and 1 to disable.", ConCommandFlag::AdminOnly);
+  @eztpCooldown = CCVar("cooldown", 0, "Set cooldown between each request.", ConCommandFlag::AdminOnly);
 }
 
 void MapInit(){
   eztpDisabled.SetInt(0);
+  eztpCooldown.SetInt(0);
+  for(int i = 1; i <= (int(pReceivedRequest.length()) - 1); i++){
+    pReceivedRequest[i] = 0;
+  }
+  for(int i = 1; i <= (int(pLastSend.length()) - 1); i++){
+    pLastSend[i] = 0;
+  }
+}
+
+HookReturnCode onJoin(CBasePlayer@ pPlayer){
+  int thisPlayer = getPlayerIndex(pPlayer);
+  pReceivedRequest[thisPlayer] = 0;
+  pLastSend[thisPlayer] = 0;
+  pAllowTp[thisPlayer] = true;
+  return HOOK_HANDLED;
 }
 
 HookReturnCode onChat(SayParameters@ pParams){
@@ -21,6 +41,18 @@ HookReturnCode onChat(SayParameters@ pParams){
   if(cPlayer is null){
     g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Teleportation failed, only valid players are allowed.\n");
     return HOOK_CONTINUE;
+  }
+  if(cArgs[0] == "/TPON" || cArgs[0] == "/tpon" || cArgs[0] == "!TPON" || cArgs[0] == "!tpon"){
+    pAllowTp[getPlayerIndex(cPlayer)] = true;
+    pParams.ShouldHide = true;
+    g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Successfully enabled teleportation for you.\n");
+    return HOOK_HANDLED;
+  }
+  if(cArgs[0] == "/TPOFF" || cArgs[0] == "/tpoff" || cArgs[0] == "!TPOFF" || cArgs[0] == "!tpoff"){
+    pAllowTp[getPlayerIndex(cPlayer)] = false;
+    pParams.ShouldHide = true;
+    g_PlayerFuncs.SayText(cPlayer, "[EasyTeleport] Successfully disabled teleportation for you.\n");
+    return HOOK_HANDLED;
   }
   if(cArgs[0] != "/TP" && cArgs[0] != "/tp" && cArgs[0] != "!TP" && cArgs[0] != "!tp"){
     return HOOK_CONTINUE;
@@ -53,19 +85,23 @@ void openTpMenu(CBasePlayer@ pPlayer){
   array<string> playerName(g_Engine.maxClients);
   for(int i = 1; i <= (int(g_Engine.maxClients)); i++){
     CBasePlayer@ cThisPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
-    if(cThisPlayer !is null){
+    if(cThisPlayer !is null && pAllowTp[getPlayerIndex(cThisPlayer)]){
       playerName[i - 1] = cThisPlayer.pev.netname;
     }
   }
-  for(int i = 1; i <= (int(playerName.length())-1); i++)
-  {
-    string thisName = playerName[i - 1];
-    if(thisName != "" && thisName != " "){
-      tpMenu.AddItem(thisName, null);
+  if(playerName[0] != ""){
+    for(int i = 1; i <= (int(playerName.length())-1); i++)
+    {
+      string thisName = playerName[i - 1];
+      if(thisName != "" && thisName != " "){
+        tpMenu.AddItem(thisName, null);
+      }
     }
+    tpMenu.Register();
+    tpMenu.Open(0, 0, pPlayer);
+  }else{
+    g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] No player available.\n");
   }
-  tpMenu.Register();
-  tpMenu.Open(0, 0, pPlayer);
 }
 
 CBasePlayer@ getPlayerCBasePlayerByName(string pName){
@@ -111,14 +147,24 @@ void tpMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTex
 }
 
 void sendTeleportRequest(CBasePlayer@ pPlayer, CBasePlayer@ cTarget){
-  pReceivedRequest[getPlayerIndex(cTarget)] = getPlayerIndex(pPlayer);
-  @tpConfirm = CTextMenu(tpConfirmRespond);
-  tpConfirm.SetTitle("[EasyTeleport]\nYou've got a new teleportation request from " + pPlayer.pev.netname +".\nOnly confirm when you think it's safe to do so.\n");
-  tpConfirm.AddItem("Accept", null);
-  tpConfirm.AddItem("Decline", null);
-  tpConfirm.Register();
-  tpConfirm.Open(0, 0, cTarget);
-  g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Your teleportation request is sent to " + cTarget.pev.netname +", please wait for confirmation.\n");
+  int thisSender = getPlayerIndex(pPlayer);
+  if((g_Engine.time - pLastSend[thisSender]) > eztpCooldown.GetInt()){
+    if(pAllowTp[getPlayerIndex(cTarget)]){
+      pReceivedRequest[getPlayerIndex(cTarget)] = getPlayerIndex(pPlayer);
+      @tpConfirm = CTextMenu(tpConfirmRespond);
+      tpConfirm.SetTitle("[EasyTeleport]\nYou've got a new teleportation request from " + pPlayer.pev.netname +".\nOnly confirm when you think it's safe to do so.\n");
+      tpConfirm.AddItem("Accept", null);
+      tpConfirm.AddItem("Decline", null);
+      tpConfirm.Register();
+      tpConfirm.Open(0, 0, cTarget);
+      g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Your teleportation request is sent to " + cTarget.pev.netname +", please wait for confirmation.\n");
+      pLastSend[thisSender] = g_Engine.time;
+    }else{
+      g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] The target player has disabled teleportation.\n");
+    }
+  }else{
+    g_PlayerFuncs.SayText(pPlayer, "[EasyTeleport] Please wait for a while before the cooldown for " + string(eztpCooldown.GetInt()) + "s ends.\n");
+  }
 }
 
 void tpConfirmRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CTextMenuItem@ mItem){
