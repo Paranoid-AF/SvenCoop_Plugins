@@ -85,6 +85,7 @@ HookReturnCode onChat(SayParameters@ pParams){
   const CCommand@ cArgs = pParams.GetArguments();
   if(pPlayer !is null && (cArgs[0] == "!buy" || cArgs[0] == "/buy" || cArgs[0] == "!BUY" || cArgs[0] == "/BUY") && isAllowed()){
     openCateMenu(pPlayer);
+    pParams.ShouldHide = true;
     return HOOK_HANDLED;
   }
   return HOOK_CONTINUE;
