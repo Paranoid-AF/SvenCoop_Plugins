@@ -135,7 +135,7 @@ bool deductCurrency(int amount, CBasePlayer@ pPlayer, string weaponName){
       pPlayer.pev.frags -= amount;
       return true;
     }else{
-      g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[Game] You don't have enough points to purchase this! You have only " + string(pPlayer.pev.frags) + " points.\n");
+      g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[Game] You don't have enough points to purchase this! You have only " + string(int(pPlayer.pev.frags)) + " points.\n");
       return false;
     }
   }else{
