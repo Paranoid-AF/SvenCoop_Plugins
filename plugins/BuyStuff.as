@@ -106,6 +106,7 @@ void shopMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CT
         g_EntityFuncs.Create(info[0], pPlayer.GetOrigin(), Vector(0, 0, 0), false).KeyValue("m_flCustomRespawnTime", "-1");
       }
       shopMenu[atoi(szInfo[1])].Open(0, 0, pPlayer);
+      mMenu.Open(0, 0, pPlayer);
     }
   }
 }
