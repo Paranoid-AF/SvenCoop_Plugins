@@ -9,6 +9,14 @@ void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
+  g_Hooks.RegisterHook(Hooks::Player::ClientPutInServer, @onJoin);
+}
+
+HookReturnCode onJoin(CBasePlayer@ pPlayer){
+  NetworkMessage m(MSG_ONE, NetworkMessages::NetworkMessageType(9), pPlayer.edict());
+  m.WriteString('bind b "say !buy"');
+  m.End();
+  return HOOK_HANDLED;
 }
 
 void MapInit(){
