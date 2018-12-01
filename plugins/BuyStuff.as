@@ -39,7 +39,7 @@ void MapInit(){
   cateMenu.Register();
   for(int i = 0; i <= (int(weaponNames.length()) - 1); i++){
     for(int j = 0; j <= (int(weaponNames[i].length()) - 1); j++){
-      if(weaponNames[i].length() != 7 && j != 0 && j % 6 == 0){
+      if(weaponNames[i].length() != 7 && j != 0 && j % 6 == 0 && cateNames.length() != 1){
           shopMenu[i].AddItem("Back to Categories", null);
       }
       array<string> info = findInfoByName(weaponNames[i][j]);
@@ -52,11 +52,15 @@ void MapInit(){
           shopMenu[i].AddItem(weaponNames[i][j] + " - " + info[2] + " Points", null);
         }
       }
-      if(j == int(weaponNames[i].length()) - 1){
+      if(j == int(weaponNames[i].length()) - 1 && cateNames.length() != 1){
         shopMenu[i].AddItem("Back to Categories", null);
       }
     }
-    shopMenu[i].SetTitle("[" + bsTitle + "]\nViewing: " + cateNames[i] + "\n");
+    if(cateNames.length() != 1){
+      shopMenu[i].SetTitle("[" + bsTitle + "]\nViewing: " + cateNames[i] + "\n");
+    }else{
+      shopMenu[i].SetTitle("[" + bsTitle + "]\n" + bsDescription + "\n");
+    }
     shopMenu[i].Register();
   }
 }
@@ -79,8 +83,16 @@ array<string> findInfoByName(string weaponName){
 HookReturnCode onChat(SayParameters@ pParams){
   CBasePlayer@ pPlayer = pParams.GetPlayer();
   const CCommand@ cArgs = pParams.GetArguments();
-  if(pPlayer !is null && (cArgs[0].ToLowercase() == "!buy" || cArgs[0].ToLowercase() == "/buy")){
-    cateMenu.Open(0, 0, pPlayer);
+  if(pPlayer !is null && !pPlayer.IsAlive()){
+    g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] Sorry, but you can't purchase anything since you're dead now.\n");
+    pParams.ShouldHide = true;
+  }
+  if(pPlayer !is null && pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!buy" || cArgs[0].ToLowercase() == "/buy")){
+    if(cateNames.length() != 1){
+      cateMenu.Open(0, 0, pPlayer);
+    }else{
+      shopMenu[0].Open(0, 0, pPlayer);
+    }
     pParams.ShouldHide = true;
     return HOOK_HANDLED;
   }
@@ -116,7 +128,11 @@ void shopMenuRespond(CTextMenu@ mMenu, CBasePlayer@ pPlayer, int iPage, const CT
       array<string> szInfo = getWeaponNameBySzName(mItem.m_szName);
       array<string> info = findInfoByName(szInfo[0]);
       if(deductCurrency(atoi(info[2]), pPlayer, info[1])){
-        g_EntityFuncs.Create(info[0], pPlayer.GetOrigin(), Vector(0, 0, 0), false).KeyValue("m_flCustomRespawnTime", "-1");
+        if(pPlayer.HasNamedPlayerItem(info[0]) is null){
+          pPlayer.GiveNamedItem(info[0], 0, 0);
+        }else{
+          g_EntityFuncs.Create(info[0], pPlayer.GetOrigin(), Vector(0, 0, 0), false).KeyValue("m_flCustomRespawnTime", "-1");
+        }
       }
       shopMenu[atoi(szInfo[1])].Open(0, 0, pPlayer);
       mMenu.Open(0, 0, pPlayer);
@@ -151,7 +167,11 @@ bool deductCurrency(int amount, CBasePlayer@ pPlayer, string weaponName){
       pPlayer.pev.frags -= amount;
       return true;
     }else{
-      g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[Game] You don't have enough points to purchase this! You have only " + string(int(pPlayer.pev.frags)) + " points.\n");
+      if(int(pPlayer.pev.frags) == 0 || int(pPlayer.pev.frags) == 1){
+        g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] You don't have enough points to purchase this! You have only " + string(int(pPlayer.pev.frags)) + " point.\n");
+      }else{
+        g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] You don't have enough points to purchase this! You have only " + string(int(pPlayer.pev.frags)) + " points.\n");
+      }
       return false;
     }
   }else{
