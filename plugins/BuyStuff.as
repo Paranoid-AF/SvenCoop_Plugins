@@ -83,7 +83,7 @@ array<string> findInfoByName(string weaponName){
 HookReturnCode onChat(SayParameters@ pParams){
   CBasePlayer@ pPlayer = pParams.GetPlayer();
   const CCommand@ cArgs = pParams.GetArguments();
-  if(pPlayer !is null && !pPlayer.IsAlive()){
+  if(pPlayer !is null && !pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!buy" || cArgs[0].ToLowercase() == "/buy")){
     g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] Sorry, but you can't purchase anything since you're dead now.\n");
     pParams.ShouldHide = true;
   }
