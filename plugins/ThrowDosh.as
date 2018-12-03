@@ -1,111 +1,113 @@
 int fragsEachDosh = 5;
-
-void Precache(){
-  g_Game.PrecacheGeneric("models/common/lambda.mdl");
-}
-
-void PluginInit(){
-  g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
-  g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
-  g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
-  g_Hooks.RegisterHook(Hooks::Player::ClientDisconnect, @onDisconnect);
+int MaxDoshAmount = 255;
+array<float> lastSoundEffect(g_Engine.maxClients);
+void PluginInit()
+{
+	g_Module.ScriptInfo.SetAuthor("Paranoid_AF & Dr. Abc.");
+	g_Module.ScriptInfo.SetContactInfo("Feel free to contact Paranoid_AF on GitHub.");
+	g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
+	g_Hooks.RegisterHook(Hooks::Player::ClientDisconnect, @onDisconnect);
 }
 
 void MapInit(){
-  g_CustomEntityFuncs.RegisterCustomEntity("item_dosh", "item_dosh");
+  for(int i=0; i<g_Engine.maxClients; i++){
+    lastSoundEffect[i] = g_Engine.time;
+  }
+	g_Game.PrecacheModel("models/common/dosh.mdl");
+	g_SoundSystem.PrecacheSound("common/dosh.wav");
+	g_Game.PrecacheGeneric("sound/common/dosh.wav");
+	g_CustomEntityFuncs.RegisterCustomEntity("item_dosh", "item_dosh");
 }
 
 HookReturnCode onDisconnect(CBasePlayer@ pPlayer){
-  CBaseEntity@ pEntity = null;
-  while((@pEntity = g_EntityFuncs.FindEntityByClassname(pEntity, "item_dosh")) !is null){
-    if(pEntity.pev.targetname == string(getPlayerIndex(pPlayer))){
-      g_EntityFuncs.Remove(pEntity);
-    }
-  }
-  return HOOK_HANDLED;
+	CBaseEntity@ pEntity = null;
+	while((@pEntity = g_EntityFuncs.FindEntityByClassname(pEntity, "item_dosh")) !is null)
+	{
+		if(pEntity.pev.targetname == string(getPlayerIndex(pPlayer)))
+			g_EntityFuncs.Remove(pEntity);
+	}
+	return HOOK_HANDLED;
 }
 
 class item_dosh: ScriptBasePlayerAmmoEntity{
-	void Spawn(){ 
-		Precache();
-		if(self.SetupModel() == false){
-			g_EntityFuncs.SetModel(self, "models/common/lambda.mdl");
-		}else{
-			g_EntityFuncs.SetModel(self, self.pev.model);
-    }
+	void Spawn()
+	{ 
+		g_EntityFuncs.SetModel(self, "models/common/dosh.mdl");
 		BaseClass.Spawn();
 	}
-	void Precache(){
-		BaseClass.Precache();
-		if(string(self.pev.model).IsEmpty()){
-			g_Game.PrecacheModel("models/common/lambda.mdl");
-		}else{
-			g_Game.PrecacheModel(self.pev.model);
-    }
-	}
-	bool AddAmmo(CBaseEntity@ pOther){
-    CBaseEntity@ pPlayer = cast<CBaseEntity@>(g_PlayerFuncs.FindPlayerByIndex(atoi(self.pev.targetname)));
-    if(pPlayer !is null){
-      pOther.pev.frags += fragsEachDosh;
-      if(pPlayer !is pOther){
-        g_PlayerFuncs.ClientPrint(cast<CBasePlayer@>(pOther), HUD_PRINTTALK, "[ThrowDosh] You just received " + string(fragsEachDosh) + " scores from "+ g_PlayerFuncs.FindPlayerByIndex(atoi(self.pev.targetname)).pev.netname +".\n");
+
+	bool AddAmmo(CBaseEntity@ pOther)
+	{
+		CBaseEntity@ pPlayer = cast<CBaseEntity@>(g_PlayerFuncs.FindPlayerByIndex(atoi(self.pev.targetname)));
+		if(pPlayer !is null)
+		{
+			pOther.pev.frags += fragsEachDosh;
+      if(g_Engine.time - lastSoundEffect[getPlayerIndex(cast<CBasePlayer@>(pOther)) - 1] >= 1){
+        if(pPlayer !is pOther){
+          g_PlayerFuncs.ClientPrint(cast<CBasePlayer@>(pOther), HUD_PRINTTALK, "[ThrowDosh] You just received " + string(fragsEachDosh) + " scores from "+ g_PlayerFuncs.FindPlayerByIndex(atoi(self.pev.targetname)).pev.netname +".\n");
+        }
+        g_SoundSystem.EmitSound( self.edict(), CHAN_ITEM, "common/dosh.wav", 1, ATTN_NORM);
+        lastSoundEffect[getPlayerIndex(cast<CBasePlayer@>(pOther)) - 1] = g_Engine.time;
       }
-      return true;
-    }else{
-      return false;
-    }
-  }
+			
+		return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 HookReturnCode onChat(SayParameters@ pParams){
-  CBasePlayer@ pPlayer = pParams.GetPlayer();
-  const CCommand@ cArgs = pParams.GetArguments();
-  if(pPlayer !is null && !pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!dosh" || cArgs[0].ToLowercase() == "/dosh")){
-    g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[ThrowDosh] Sorry, but you can't throw dosh since you're dead now.\n");
-    pParams.ShouldHide = true;
-  }
-  if(pPlayer !is null && pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!dosh" || cArgs[0].ToLowercase() == "/dosh")){
-    int doshTotal = atoi(cArgs[1]);
-    if(doshTotal < fragsEachDosh){
-      doshTotal = fragsEachDosh;
-    }
-    int doshAmount = doshTotal / fragsEachDosh;
-    if(pPlayer.pev.frags >= fragsEachDosh * doshAmount){
-      for(int i=0; i<doshAmount; i++){
-        TraceResult tr;
-        Vector vecSrc = pPlayer.GetGunPosition();
-        Vector vecAiming = pPlayer.GetAutoaimVector(AUTOAIM_5DEGREES);
-        Vector vecEnd = vecSrc + vecAiming * 4096;
-        g_Utility.TraceLine(vecSrc, vecEnd, dont_ignore_monsters, pPlayer.edict(), tr);
-        
-        CBaseEntity@ newEntity = g_EntityFuncs.Create("item_dosh", tr.vecEndPos + Vector(3*i, 3*i, 0), Vector(0, 0, 0), false);
-        newEntity.KeyValue("m_flCustomRespawnTime", "-1");
-        newEntity.pev.rendermode = kRenderNormal;
-        newEntity.pev.renderfx = kRenderFxGlowShell;
-        newEntity.pev.renderamt = 0;
-        newEntity.pev.rendercolor = Vector(0,255,0);
-        newEntity.pev.targetname = string(getPlayerIndex(pPlayer));
+	CBasePlayer@ pPlayer = pParams.GetPlayer();
+	const CCommand@ cArgs = pParams.GetArguments();
+	if(pPlayer !is null && !pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!dosh" || cArgs[0].ToLowercase() == "/dosh"))
+	{
+		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[ThrowDosh] Sorry, but you can't throw dosh since you're dead now.\n");
+		pParams.ShouldHide = true;
+	}
+	
+	if(pPlayer !is null && pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!dosh" || cArgs[0].ToLowercase() == "/dosh"))
+	{
+		int doshTotal = ((atoi(cArgs[1]) >= MaxDoshAmount) ? MaxDoshAmount : (atoi(cArgs[1])));
+		if(doshTotal < fragsEachDosh)
+			doshTotal = fragsEachDosh;
+		int doshAmount = ((doshTotal >= 1) ?  doshTotal / fragsEachDosh : 1);
+	if(pPlayer.pev.frags >= fragsEachDosh * doshAmount)
+	{
+		for(int i=0; i<doshAmount; i++)
+		{
+        CBaseEntity@ pDosh = g_EntityFuncs.Create("item_dosh", pPlayer.pev.origin + g_Engine.v_forward * 30 + g_Engine.v_up * 5 ,Vector(Math.RandomLong (-25,25),Math.RandomLong (-25,25),Math.RandomLong (-25,25)), false);
+		pDosh.pev.velocity = pPlayer.pev.velocity + g_Engine.v_forward * Math.RandomLong (250,300) + g_Engine.v_up * Math.RandomLong (140,200) + g_Engine.v_right * Math.RandomLong (-25,25);
+        pDosh.pev.angles = Math.VecToAngles( pDosh.pev.velocity );
+        pDosh.KeyValue("m_flCustomRespawnTime", "-1");
+        pDosh.pev.targetname = string(getPlayerIndex(pPlayer));
         
         pPlayer.pev.frags -= fragsEachDosh;
-      }
-    }else{
-      g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[ThrowDosh] Sorry, but you don't have enough dosh.\n");
+		}
+	}
+	else
+	{
+		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[ThrowDosh] Sorry, but you don't have enough dosh.\n");
     }
-    pParams.ShouldHide = true;
+	pParams.ShouldHide = true;
     return HOOK_HANDLED;
   }
   return HOOK_CONTINUE;
 }
 
 int getPlayerIndex(CBasePlayer@ pPlayer){
-  CBasePlayer@ findPlayer = null;
-  int thisIndex;
-  for(int i = 1; i <= g_Engine.maxClients; i++){
-    @findPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
-    if(findPlayer is pPlayer){
-      thisIndex = i;
-      break;
-    }
-  }
-  return thisIndex;
+	CBasePlayer@ findPlayer = null;
+	int thisIndex;
+	for(int i = 1; i <= g_Engine.maxClients; i++)
+	{
+		@findPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
+		if(findPlayer is pPlayer)
+		{
+			thisIndex = i;
+			break;
+		}
+	}
+	return thisIndex;
 }
