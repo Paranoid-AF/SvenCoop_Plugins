@@ -5,11 +5,14 @@ array<string> cateNames;
 array<array<string>> weaponNames;
 array<array<string>> weaponNamesWithPrices;
 array<float> usedCurrency(g_Engine.maxClients);
+array<float> playerScore(g_Engine.maxClients);
 
 CScheduledFunction@ refreshHUD;
 
 void Precache(){
   g_Game.PrecacheGeneric("sprites/misc/dollar.spr");
+  g_Game.PrecacheGeneric("sprites/misc/deduct.spr");
+  g_Game.PrecacheGeneric("sprites/misc/add.spr");
 }
 
 void PluginInit(){
@@ -28,20 +31,63 @@ float queryForBalance(CBasePlayer@ pPlayer){
 
 void timer_refreshHUD(){
   for(int i=0; i<g_Engine.maxClients; i++){
-    CBasePlayer@ pPlayer =  g_PlayerFuncs.FindPlayerByIndex(i);
+    CBasePlayer@ pPlayer =  g_PlayerFuncs.FindPlayerByIndex(i+1);
     if(pPlayer !is null){
       HUDNumDisplayParams params;
-      params.channel = 0;
+      params.channel = 3;
       params.flags = HUD_ELEM_SCR_CENTER_X | HUD_ELEM_DEFAULT_ALPHA;
       params.value = queryForBalance(pPlayer);
-      params.x = 0;
-      params.y = 1;
+      params.x = 0.5;
+      params.y = 0.88;
       params.defdigits = 1;
       params.maxdigits = 4;
       params.color1 = RGBA_SVENCOOP;
       params.spritename = "misc/dollar.spr";
       g_PlayerFuncs.HudNumDisplay(pPlayer, params);
+      
+      if(int(pPlayer.pev.frags) > int(playerScore[i])){
+        showScoringHUD(pPlayer, int(pPlayer.pev.frags - playerScore[i]));
+        playerScore[i] = pPlayer.pev.frags;
+      }
     }
+  }
+}
+
+void showDeductHUD(CBasePlayer@ pPlayer, int amount){
+  if(pPlayer !is null){
+    HUDNumDisplayParams params;
+    params.channel = 4;
+    params.flags = HUD_ELEM_SCR_CENTER_X | HUD_ELEM_DEFAULT_ALPHA;
+    params.value = amount;
+    params.fadeinTime = 0.15;
+    params.holdTime = 1;
+    params.fadeoutTime = 0.15;
+    params.x = 0.5;
+    params.y = 0.82;
+    params.defdigits = 1;
+    params.maxdigits = 4;
+    params.color1 = RGBA_RED;
+    params.spritename = "misc/deduct.spr";
+    g_PlayerFuncs.HudNumDisplay(pPlayer, params);
+  }
+}
+
+void showScoringHUD(CBasePlayer@ pPlayer, int amount){
+  if(pPlayer !is null){
+    HUDNumDisplayParams params;
+    params.channel = 4;
+    params.flags = HUD_ELEM_SCR_CENTER_X | HUD_ELEM_DEFAULT_ALPHA;
+    params.value = amount;
+    params.fadeinTime = 0.15;
+    params.holdTime = 1;
+    params.fadeoutTime = 0.15;
+    params.x = 0.5;
+    params.y = 0.82;
+    params.defdigits = 1;
+    params.maxdigits = 4;
+    params.color1 = RGBA_GREEN;
+    params.spritename = "misc/add.spr";
+    g_PlayerFuncs.HudNumDisplay(pPlayer, params);
   }
 }
 
@@ -72,7 +118,9 @@ void MapInit(){
   }
   g_Scheduler.ClearTimerList();
   @refreshHUD = null;
-  @refreshHUD = g_Scheduler.SetInterval("timer_refreshHUD", 0.3, g_Scheduler.REPEAT_INFINITE_TIMES);
+  if(isWeaponAllowed("")){
+    @refreshHUD = g_Scheduler.SetInterval("timer_refreshHUD", 0.3, g_Scheduler.REPEAT_INFINITE_TIMES);
+  }
   for(int i = 0; i <= (int(bsConf.length()) - 1); i++){
     int findCate = cateNames.find(bsConf[i][3]);
     if(isWeaponAllowed(bsConf[i][1])){
@@ -142,10 +190,14 @@ HookReturnCode onChat(SayParameters@ pParams){
     pParams.ShouldHide = true;
   }
   if(pPlayer !is null && pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!buy" || cArgs[0].ToLowercase() == "/buy")){
-    if(cateNames.length() != 1){
-      cateMenu.Open(0, 0, pPlayer);
+    if(isWeaponAllowed("")){
+      if(cateNames.length() != 1){
+        cateMenu.Open(0, 0, pPlayer);
+      }else{
+        shopMenu[0].Open(0, 0, pPlayer);
+      }
     }else{
-      shopMenu[0].Open(0, 0, pPlayer);
+      g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] Sorry, but no weapon is allowed in this map!\n");
     }
     pParams.ShouldHide = true;
     return HOOK_HANDLED;
@@ -219,6 +271,7 @@ bool deductCurrency(int amount, CBasePlayer@ pPlayer, string weaponName){
   if(pPlayer !is null){
     if(amount <= queryForBalance(pPlayer)){
       usedCurrency[getPlayerIndex(pPlayer)-1] += amount;
+      showDeductHUD(pPlayer, amount);
       return true;
     }else{
       if(int(queryForBalance(pPlayer)) == 0 || int(queryForBalance(pPlayer)) == 1){
