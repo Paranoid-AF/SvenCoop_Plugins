@@ -38,7 +38,7 @@ void timer_refreshHUD(){
       params.flags = HUD_ELEM_SCR_CENTER_X | HUD_ELEM_DEFAULT_ALPHA;
       params.value = queryForBalance(pPlayer);
       params.x = 0.5;
-      params.y = 0.88;
+      params.y = 0.9;
       params.defdigits = 1;
       params.maxdigits = 4;
       params.color1 = RGBA_SVENCOOP;
@@ -63,7 +63,7 @@ void showDeductHUD(CBasePlayer@ pPlayer, int amount){
     params.holdTime = 1;
     params.fadeoutTime = 0.15;
     params.x = 0.5;
-    params.y = 0.82;
+    params.y = 0.858;
     params.defdigits = 1;
     params.maxdigits = 4;
     params.color1 = RGBA_RED;
@@ -82,7 +82,7 @@ void showScoringHUD(CBasePlayer@ pPlayer, int amount){
     params.holdTime = 1;
     params.fadeoutTime = 0.15;
     params.x = 0.5;
-    params.y = 0.82;
+    params.y = 0.855;
     params.defdigits = 1;
     params.maxdigits = 4;
     params.color1 = RGBA_GREEN;
