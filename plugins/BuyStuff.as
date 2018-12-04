@@ -4,6 +4,13 @@ CTextMenu@ cateMenu = CTextMenu(cateMenuRespond);
 array<string> cateNames;
 array<array<string>> weaponNames;
 array<array<string>> weaponNamesWithPrices;
+array<float> usedCurrency(g_Engine.maxClients);
+
+CScheduledFunction@ refreshHUD;
+
+void Precache(){
+  g_Game.PrecacheGeneric("sprites/misc/dollar.spr");
+}
 
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
@@ -11,7 +18,48 @@ void PluginInit(){
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
 }
 
+float queryForBalance(CBasePlayer@ pPlayer){
+  if(pPlayer !is null){
+    return (pPlayer.pev.frags - usedCurrency[getPlayerIndex(pPlayer)-1]);
+  }else{
+    return 0;
+  }
+}
+
+void timer_refreshHUD(){
+  for(int i=0; i<g_Engine.maxClients; i++){
+    CBasePlayer@ pPlayer =  g_PlayerFuncs.FindPlayerByIndex(i);
+    if(pPlayer !is null){
+      HUDNumDisplayParams params;
+      params.channel = 0;
+      params.flags = HUD_ELEM_SCR_CENTER_X | HUD_ELEM_DEFAULT_ALPHA;
+      params.value = queryForBalance(pPlayer);
+      params.x = 0;
+      params.y = 1;
+      params.defdigits = 1;
+      params.maxdigits = 4;
+      params.color1 = RGBA_SVENCOOP;
+      params.spritename = "misc/dollar.spr";
+      g_PlayerFuncs.HudNumDisplay(pPlayer, params);
+    }
+  }
+}
+
+int getPlayerIndex(CBasePlayer@ pPlayer){
+  CBasePlayer@ findPlayer = null;
+  int thisIndex;
+  for(int i = 1; i <= g_Engine.maxClients; i++){
+    @findPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
+    if(findPlayer is pPlayer){
+      thisIndex = i;
+      break;
+    }
+  }
+  return thisIndex;
+}
+
 void MapInit(){
+  Precache();
   shopMenu = {};
   cateMenu.Unregister();
   @cateMenu = CTextMenu(cateMenuRespond);
@@ -19,6 +67,12 @@ void MapInit(){
   weaponNames = {};
   weaponNamesWithPrices = {};
   cateMenu.SetTitle("[" + bsTitle + "]\n" + bsDescription + "\n");
+  for(int i=0; i<g_Engine.maxClients; i++){
+    usedCurrency[i] = 0;
+  }
+  g_Scheduler.ClearTimerList();
+  @refreshHUD = null;
+  @refreshHUD = g_Scheduler.SetInterval("timer_refreshHUD", 0.3, g_Scheduler.REPEAT_INFINITE_TIMES);
   for(int i = 0; i <= (int(bsConf.length()) - 1); i++){
     int findCate = cateNames.find(bsConf[i][3]);
     if(isWeaponAllowed(bsConf[i][1])){
@@ -163,14 +217,14 @@ bool isWeaponAllowed(string weaponName){
 
 bool deductCurrency(int amount, CBasePlayer@ pPlayer, string weaponName){
   if(pPlayer !is null){
-    if(amount <= pPlayer.pev.frags){
-      pPlayer.pev.frags -= amount;
+    if(amount <= queryForBalance(pPlayer)){
+      usedCurrency[getPlayerIndex(pPlayer)-1] += amount;
       return true;
     }else{
-      if(int(pPlayer.pev.frags) == 0 || int(pPlayer.pev.frags) == 1){
-        g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] You don't have enough points to purchase this! You have only " + string(int(pPlayer.pev.frags)) + " point.\n");
+      if(int(queryForBalance(pPlayer)) == 0 || int(queryForBalance(pPlayer)) == 1){
+        g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] You don't have enough points to purchase this! You have only " + string(int(queryForBalance(pPlayer))) + " point.\n");
       }else{
-        g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] You don't have enough points to purchase this! You have only " + string(int(pPlayer.pev.frags)) + " points.\n");
+        g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] You don't have enough points to purchase this! You have only " + string(int(queryForBalance(pPlayer))) + " points.\n");
       }
       return false;
     }
