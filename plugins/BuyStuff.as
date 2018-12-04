@@ -115,6 +115,7 @@ void MapInit(){
   cateMenu.SetTitle("[" + bsTitle + "]\n" + bsDescription + "\n");
   for(int i=0; i<g_Engine.maxClients; i++){
     usedCurrency[i] = 0;
+    playerScore[i] = 0;
   }
   g_Scheduler.ClearTimerList();
   @refreshHUD = null;
