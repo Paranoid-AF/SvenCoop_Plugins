@@ -46,9 +46,9 @@ void timer_refreshHUD(){
       g_PlayerFuncs.HudNumDisplay(pPlayer, params);
       
       if(int(pPlayer.pev.frags) > int(playerScore[i])){
-        showScoringHUD(pPlayer, int(pPlayer.pev.frags - playerScore[i]));
-        playerScore[i] = pPlayer.pev.frags;
+        showScoringHUD(pPlayer, int(pPlayer.pev.frags) - int(playerScore[i]));
       }
+      playerScore[i] = pPlayer.pev.frags;
     }
   }
 }
