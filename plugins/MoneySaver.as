@@ -1,6 +1,7 @@
 array<float> playerFrags;
 array<string> playerAuth;
 bool shouldLoad = false;
+string supposedMap = "";
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
@@ -29,10 +30,14 @@ void saveScore(CBasePlayer@ pPlayer){
 
 void loadScore(CBasePlayer@ pPlayer){
   int legacyIndex = playerAuth.find(g_EngineFuncs.GetPlayerAuthId(pPlayer.edict()));
-  if(legacyIndex >= 0){
-    pPlayer.pev.frags = playerFrags[legacyIndex];
-    playerAuth.removeAt(legacyIndex);
-    playerFrags.removeAt(legacyIndex);
+  if(supposedMap == g_Engine.mapname){
+    if(legacyIndex >= 0){
+      pPlayer.pev.frags = playerFrags[legacyIndex];
+      playerAuth.removeAt(legacyIndex);
+      playerFrags.removeAt(legacyIndex);
+    }
+  }else{
+    supposedMap = "";
   }
 }
 
@@ -66,6 +71,7 @@ bool shouldSave(){
   if(nextMap == ""){
     return false;
   }else{
+    supposedMap = nextMap;
     return true;
   }
 }
