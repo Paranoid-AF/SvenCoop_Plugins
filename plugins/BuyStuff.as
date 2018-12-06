@@ -4,8 +4,10 @@ CTextMenu@ cateMenu = CTextMenu(cateMenuRespond);
 array<string> cateNames;
 array<array<string>> weaponNames;
 array<array<string>> weaponNamesWithPrices;
-array<float> usedCurrency(g_Engine.maxClients);
+dictionary usedCurrency = {{"STEAMID", 1.0}};
 array<float> playerScore(g_Engine.maxClients);
+bool shouldLoad = false;
+string supposedMap = "";
 
 CScheduledFunction@ refreshHUD;
 
@@ -18,14 +20,38 @@ void Precache(){
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
+  usedCurrency.deleteAll();
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
+  g_Hooks.RegisterHook(Hooks::Game::MapChange, @onMapChange);
 }
 
 float queryForBalance(CBasePlayer@ pPlayer){
   if(pPlayer !is null){
-    return (pPlayer.pev.frags - usedCurrency[getPlayerIndex(pPlayer)-1]);
+    return (pPlayer.pev.frags - float(usedCurrency[g_EngineFuncs.GetPlayerAuthId(pPlayer.edict())]));
   }else{
     return 0;
+  }
+}
+
+HookReturnCode onMapChange(){
+  if(shouldSave()){
+    shouldLoad = true;
+  }else{
+    shouldLoad = false;
+  }
+  return HOOK_HANDLED;
+}
+
+bool shouldSave(){
+  string nextMap = g_EngineFuncs.CVarGetString("mp_nextmap");
+  if(nextMap == ""){
+    nextMap = g_EngineFuncs.CVarGetString("mp_survival_nextmap");
+  }
+  if(nextMap == ""){
+    return false;
+  }else{
+    supposedMap = nextMap;
+    return true;
   }
 }
 
@@ -104,6 +130,17 @@ int getPlayerIndex(CBasePlayer@ pPlayer){
   return thisIndex;
 }
 
+bool hasMoneySaver(){
+	array<string> pluginList = g_PluginManager.GetPluginList();
+	bool hasInstalled = false;
+	for(int i=0; i<int(pluginList.length()); i++){
+		if(pluginList[i] == "MoneySaver"){
+			hasInstalled = true;
+		}
+	}
+	return hasInstalled;
+}
+
 void MapInit(){
   Precache();
   shopMenu = {};
@@ -114,8 +151,13 @@ void MapInit(){
   weaponNamesWithPrices = {};
   cateMenu.SetTitle("[" + bsTitle + "]\n" + bsDescription + "\n");
   for(int i=0; i<g_Engine.maxClients; i++){
-    usedCurrency[i] = 0;
-    playerScore[i] = 0;
+      playerScore[i] = 0;
+  }
+  if(hasMoneySaver() && (supposedMap != g_Engine.mapname || !shouldLoad)){
+    usedCurrency.deleteAll();
+  }
+  if(!hasMoneySaver()){
+    usedCurrency.deleteAll();
   }
   g_Scheduler.ClearTimerList();
   @refreshHUD = null;
@@ -271,7 +313,8 @@ bool isWeaponAllowed(string weaponName){
 bool deductCurrency(int amount, CBasePlayer@ pPlayer, string weaponName){
   if(pPlayer !is null){
     if(amount <= queryForBalance(pPlayer)){
-      usedCurrency[getPlayerIndex(pPlayer)-1] += amount;
+      float originalVal = float(usedCurrency[g_EngineFuncs.GetPlayerAuthId(pPlayer.edict())]);
+      usedCurrency[g_EngineFuncs.GetPlayerAuthId(pPlayer.edict())] = originalVal + amount;
       showDeductHUD(pPlayer, amount);
       return true;
     }else{
