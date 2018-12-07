@@ -116,6 +116,12 @@ int PvpTakeDamage(CBasePlayer@ pPlayer, entvars_t@ pInflictor, entvars_t@ pAttac
     pPlayer.pev.armorvalue = 0;
   }
   
+  float flTake = int(flDamage);
+  if(pInflictor !is null){
+    @pPlayer.pev.dmg_inflictor = pInflictor.get_pContainingEntity();
+  }
+  pPlayer.pev.dmg_take += flTake;
+  
   if(pPlayer.pev.health <= 0){
     if(g_Engine.time - pPlayer.m_fDeadTime > g_EngineFuncs.CVarGetFloat("mp_respawndelay")){
       g_PlayerFuncs.ClientPrintAll(HUD_PRINTNOTIFY, string(atkPlayer.pev.netname) + " :: "  + string(atkPlayer.m_hActiveItem.GetEntity().pev.classname) + " :: " + string(pPlayer.pev.netname) + "\n");
