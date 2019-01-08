@@ -22,7 +22,13 @@ void PluginInit(){
   g_Module.ScriptInfo.SetContactInfo("Feel free to contact me on GitHub.");
   usedCurrency.deleteAll();
   g_Hooks.RegisterHook(Hooks::Player::ClientSay, @onChat);
+  g_Hooks.RegisterHook(Hooks::Player::ClientDisconnect, @onQuit);
   g_Hooks.RegisterHook(Hooks::Game::MapChange, @onMapChange);
+}
+
+HookReturnCode onQuit(CBasePlayer@ pPlayer){
+  usedCurrency[g_EngineFuncs.GetPlayerAuthId(pPlayer.edict())] = 0;
+  return HOOK_HANDLED;
 }
 
 float queryForBalance(CBasePlayer@ pPlayer){
