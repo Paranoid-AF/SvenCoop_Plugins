@@ -237,6 +237,7 @@ HookReturnCode onChat(SayParameters@ pParams){
   if(pPlayer !is null && !pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!buy" || cArgs[0].ToLowercase() == "/buy")){
     g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[" + bsTitle + "] Sorry, but you can't purchase anything since you're dead now.\n");
     pParams.ShouldHide = true;
+    return HOOK_HANDLED;
   }
   if(pPlayer !is null && pPlayer.IsAlive() && (cArgs[0].ToLowercase() == "!buy" || cArgs[0].ToLowercase() == "/buy")){
     if(isWeaponAllowed("")){
