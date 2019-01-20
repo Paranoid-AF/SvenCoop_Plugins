@@ -65,7 +65,9 @@ void dropItems(string monsterName, Vector position){
     for(int i=0; i<int(dictKeys.length()); i++){
       thisRandom += int(dropLoot[dictKeys[i]]);
       if(thisRandom >= randomNum){
-        g_EntityFuncs.Create(dictKeys[i], position + Vector(0, 0, 50), Vector(0, 0, 0), false).KeyValue("m_flCustomRespawnTime", "-1");
+        if(dictKeys[i] != ""){
+          g_EntityFuncs.Create(dictKeys[i], position + Vector(0, 0, 50), Vector(0, 0, 0), false).KeyValue("m_flCustomRespawnTime", "-1");
+        }
         break;
       }
     }
