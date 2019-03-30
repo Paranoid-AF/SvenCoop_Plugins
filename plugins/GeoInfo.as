@@ -30,9 +30,15 @@ string GetGeoByIP(string IP){
   uint intIP = (atoi(FormattedIP[0]) << 24) + (atoi(FormattedIP[1]) << 16) + (atoi(FormattedIP[2]) << 8) + atoi(FormattedIP[3]);
   IP = string(intIP);
   string Filename = IP.SubString(0, 4);
-  if(Location == "UNKNOWN"){ Location = GetLocation(IP, Filename); }
-  if(Location == "UNKNOWN"){ Location = GetLocation(IP, string(atoi(Filename)+1)); }
-  if(Location == "UNKNOWN"){ Location = GetLocation(IP, string(atoi(Filename)-1)); }
+  Location = GetLocation(IP, Filename);
+  int counter = 0;
+  while(Location == "UNKNOWN"){
+    counter++;
+    Location = GetLocation(IP, string(atoi(Filename)-counter));
+    if(counter > 10){
+      break;
+    }
+  }
   return Location;
 }
 
@@ -68,8 +74,6 @@ string GetLocation(string IP, string Filename){
       }
 		}
 		file.Close();
-	}else{
-    g_Game.AlertMessage(at_console, "[ERROR - GeoInfo] Cannot read IP data file: " + DataPath+Filename+".csv" + ", check if it exists and SCDS has the permission to access it!\n");
-  }
+	}
   return Location;
 }
