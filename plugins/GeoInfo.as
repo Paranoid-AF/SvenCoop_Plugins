@@ -1,4 +1,7 @@
 const string DataPath = "scripts/plugins/GeoInfo/";
+const int AccuracyFactor = 15;
+
+
 dictionary LocationLocale;
 void PluginInit(){
   g_Module.ScriptInfo.SetAuthor("Paranoid_AF");
@@ -35,7 +38,7 @@ string GetGeoByIP(string IP){
   while(Location == "UNKNOWN"){
     counter++;
     Location = GetLocation(IP, string(atoi(Filename)-counter));
-    if(counter > 10){
+    if(counter > AccuracyFactor){
       break;
     }
   }
